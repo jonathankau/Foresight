@@ -1,0 +1,220 @@
+<!DOCTYPE HTML>
+<!--
+	Tessellate by HTML5 UP
+	html5up.net | @n33co
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Foresight</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery.scrolly.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/init.js"></script>
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" />
+			<link rel="stylesheet" href="css/style.css" />
+			<link rel="stylesheet" href="css/style-wide.css" />
+		</noscript>
+		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
+		<!--[if lte IE 9]><link rel="stylesheet" href="css/ie/v9.css" /><![endif]-->
+	</head>
+	<body>
+
+	<!--Add a button for the user to click to initiate auth sequence -->
+    <script type="text/javascript">
+
+      var clientId = '39127701207-g8cqsa7n9ra6rm8vbrr5ki782771hhi9.apps.googleusercontent.com';
+
+      var apiKey = 'AIzaSyCdn5ZjszGz3HEwPDDuuJu3Y1vnTJ5f1rw';
+
+      var scopes = 'https://www.googleapis.com/auth/prediction https://www.googleapis.com/auth/devstorage.read_write';
+
+      function getUrlVars()
+        {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++)
+            {
+              hash = hashes[i].split('=');
+              vars.push(hash[0]);
+              vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+
+      function handleComputeEngineClientLoad() {
+        // Step 2: Reference the API key
+        gapi.client.setApiKey(apiKey);
+        window.setTimeout(checkAuth,1);
+      }
+
+      function checkAuth() {
+        gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: true}, handleAuthResult);
+      }
+
+      function handleAuthResult(authResult) {
+        if (authResult && !authResult.error) {
+
+          console.log(authResult);
+          console.log("Success!");
+
+          makeApiCall();
+        } else {
+          authorizeButton.onclick = handleAuthClick;
+
+          console.log("Fail");
+        }
+      }
+
+      function handleAuthClick(event) {
+        // Step 3: get authorization to use private data
+        gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: false}, handleAuthResult);
+        return false;
+      }
+
+      function runPrediction() {
+        // TODO: change id to be unique for every user
+        var prediction_request = gapi.client.prediction.trainedmodels.predict(
+              {
+                "project": "brave-nucleus-763",
+                "id": "test",
+                "input": {
+                  "csvInstance": [
+                      "sdfsdfsdf", // status
+                      "0", // number of tags
+                      "0100", // time of day
+                      "noimage" // image or noimage
+                    ]
+                }
+              }
+            )
+
+            prediction_request.execute(function(resp) {
+              console.log(resp)
+            });
+      }
+
+      function waitUntilTrained() {
+        var request = gapi.client.prediction.trainedmodels.get(
+        {
+          "project": "brave-nucleus-763",
+          "id": "test",
+        })
+
+        status = false
+
+        Promise.all([status]).then(function() {
+          // Success
+          runPrediction()
+        }, function() {
+          // Retry
+          request.execute(function(resp) {
+            console.log(resp);
+            if (resp.trainingStatus === "DONE") {
+              status = true
+            }
+          })
+        });
+      }
+
+      // Load the API and make an API call.  Display the results on the screen.
+      function makeApiCall() {
+
+        gapi.client.load('prediction', 'v1.6', function() {
+          console.log("Loaded prediction api");
+
+          var request = gapi.client.prediction.trainedmodels.insert(
+            {
+              "project": "brave-nucleus-763",
+              "id": "test",
+              "modelType": "REGRESSION",
+              "storageDataLocation": "",
+              "trainingInstances": [
+                {
+                  "output": 50,
+                  "csvInstance": [
+                    "I just bought a car", // status
+                    "10", // number of tags
+                    "1200", // time of day
+                    "image" // image or noimage
+                  ]
+                },
+                {
+                  "output": 100,
+                  "csvInstance": [
+                    "I just bought a car!!", // status
+                    "100", // number of tags
+                    "1300", // time of day
+                    "noimage" // image or noimage
+                  ]
+                },
+                {
+                  "output": 7,
+                  "csvInstance": [
+                    "Test", // status
+                    "6", // number of tags
+                    "0100", // time of day
+                    "noimage" // image or noimage
+                  ]
+                },
+                {
+                  "output": 3,
+                  "csvInstance": [
+                    "potato", // status
+                    "0", // number of tags
+                    "0500", // time of day
+                    "noimage" // image or noimage
+                  ]
+                },
+                {
+                  "output": 16,
+                  "csvInstance": [
+                    "sdfsdfsdf", // status
+                    "0", // number of tags
+                    "1400", // time of day
+                    "image" // image or noimage
+                  ]
+                },
+                {
+                  "output": 3,
+                  "csvInstance": [
+                    "Bugs", // status
+                    "0", // number of tags
+                    "0100", // time of day
+                    "noimage" // image or noimage
+                  ]
+                },
+              ] ,
+            }
+          );
+
+          request.execute(function(resp) {
+            console.log(resp);
+
+            setTimeout(waitUntilTrained, 15000);
+            
+          });
+
+        });
+
+      }
+    </script>
+    <script src="https://apis.google.com/js/client.js?onload=handleComputeEngineClientLoad"></script>
+
+		<!-- Header -->
+			<section id="header" class="dark">
+				<header>
+					<h1>foresight</h1>
+					<p>A predictive engine for Facebook post engagement</p>
+				</header>
+				<footer>
+					<a href="#first" class="button scrolly">Login with Facebook</a>
+				</footer>
+			</section>
+	</body>
+</html>
