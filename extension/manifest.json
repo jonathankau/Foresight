@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+
+  "name": "ForeSight",
+  "description": "A way to predict the number of likes you would have on a status",
+  "version": "1.0",
+"content_security_policy": "script-src 'self' https://connect.facebook.net; object-src 'self'",
+
+  "browser_action": {
+    "default_icon": "facebook_small.png",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+  	"https://connect.facebook.net/en_US/all.js",
+    "storage"
+   ]
+}

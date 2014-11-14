@@ -28,26 +28,29 @@
 	<!--Add a button for the user to click to initiate auth sequence -->
     <script type="text/javascript">
 
+      var trainingData = [];
+
       var clientId = '39127701207-g8cqsa7n9ra6rm8vbrr5ki782771hhi9.apps.googleusercontent.com';
 
       var apiKey = 'AIzaSyCdn5ZjszGz3HEwPDDuuJu3Y1vnTJ5f1rw';
 
       var scopes = 'https://www.googleapis.com/auth/prediction https://www.googleapis.com/auth/devstorage.read_write';
 
-      function getUrlVars()
-        {
-            var vars = [], hash;
-            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-            for(var i = 0; i < hashes.length; i++)
-            {
-              hash = hashes[i].split('=');
-              vars.push(hash[0]);
-              vars[hash[0]] = hash[1];
-            }
-            return vars;
-        }
+		function getQueryVariable(variable) {
+		  var query = window.location.search.substring(1);
+		  var vars = query.split("&");
+		  for (var i=0;i<vars.length;i++) {
+		    var pair = vars[i].split("=");
+		    if (pair[0] == variable) {
+		      return pair[1];
+		    }
+		  } 
+		  alert('Query Variable ' + variable + ' not found');
+		}
 
       function handleComputeEngineClientLoad() {
+console.log("Param: " + getQueryVariable("id"));
+
         // Step 2: Reference the API key
         gapi.client.setApiKey(apiKey);
         window.setTimeout(checkAuth,1);
@@ -82,14 +85,16 @@
         var prediction_request = gapi.client.prediction.trainedmodels.predict(
               {
                 "project": "brave-nucleus-763",
-                "id": "test",
+                "id": getQueryVariable("id"),
                 "input": {
                   "csvInstance": [
-                      "sdfsdfsdf", // status
-                      "0", // number of tags
-                      "0100", // time of day
-                      "noimage" // image or noimage
-                    ]
+                    "Just won a new Myo!",                     // status
+                    "05",  // time of day
+                    "40",              // Length of status
+                    "0"  // Number of question marks
+                    //"10",                                       // number of tags
+                    //"image"                                     // image or noimage
+                  ]
                 }
               }
             )
@@ -103,7 +108,7 @@
         var request = gapi.client.prediction.trainedmodels.get(
         {
           "project": "brave-nucleus-763",
-          "id": "test",
+          "id": getQueryVariable("id"),
         })
 
         status = false
@@ -131,80 +136,180 @@
           var request = gapi.client.prediction.trainedmodels.insert(
             {
               "project": "brave-nucleus-763",
-              "id": "test",
+              "id": getQueryVariable("id"),
               "modelType": "REGRESSION",
               "storageDataLocation": "",
-              "trainingInstances": [
-                {
-                  "output": 50,
-                  "csvInstance": [
-                    "I just bought a car", // status
-                    "10", // number of tags
-                    "1200", // time of day
-                    "image" // image or noimage
-                  ]
-                },
-                {
-                  "output": 100,
-                  "csvInstance": [
-                    "I just bought a car!!", // status
-                    "100", // number of tags
-                    "1300", // time of day
-                    "noimage" // image or noimage
-                  ]
-                },
-                {
-                  "output": 7,
-                  "csvInstance": [
-                    "Test", // status
-                    "6", // number of tags
-                    "0100", // time of day
-                    "noimage" // image or noimage
-                  ]
-                },
-                {
-                  "output": 3,
-                  "csvInstance": [
-                    "potato", // status
-                    "0", // number of tags
-                    "0500", // time of day
-                    "noimage" // image or noimage
-                  ]
-                },
-                {
-                  "output": 16,
-                  "csvInstance": [
-                    "sdfsdfsdf", // status
-                    "0", // number of tags
-                    "1400", // time of day
-                    "image" // image or noimage
-                  ]
-                },
-                {
-                  "output": 3,
-                  "csvInstance": [
-                    "Bugs", // status
-                    "0", // number of tags
-                    "0100", // time of day
-                    "noimage" // image or noimage
-                  ]
-                },
-              ] ,
+              "trainingInstances": trainingData,
             }
           );
 
           request.execute(function(resp) {
             console.log(resp);
 
-            setTimeout(waitUntilTrained, 15000);
+            // Hide button
+    		document.getElementById("footer_button").className = "";
+    		document.getElementById("footer_button").innerHTML = "Processed";
+
+            setTimeout(waitUntilTrained, 20000);
             
           });
 
         });
 
       }
+
+        // Facebook SDK stuff
+          // This is called with the results from from FB.getLoginStatus().
+		  function statusChangeCallback(response) {
+		    console.log('statusChangeCallback');
+		    console.log(response);
+		    // The response object is returned with a status field that lets the
+		    // app know the current login status of the person.
+		    // Full docs on the response object can be found in the documentation
+		    // for FB.getLoginStatus().
+		    if (response.status === 'connected') {
+		    	// Check to make sure we haven't processed already so we don't do it twice
+		    	// if (!jQuery.isEmptyObject(StorageArea.get("processed_id"))) {
+		    	// 	alert("Non-empty Storage")
+
+		    	// 	// Hide button
+		    	// 	document.getElementById("footer_button").className = "";
+		    	// 	document.getElementById("footer_button").innerHTML = "Processed";
+		    	// } else {
+			      	// Logged into your app and Facebook.
+			      	printSomeFeed();
+		    	// }
+		    } else if (response.status === 'not_authorized') {
+		      // The person is logged into Facebook, but not your app.
+		      document.getElementById('status').innerHTML = 'Please log ' +
+		        'into this app.';
+		    } else {
+		      // The person is not logged into Facebook, so we're not sure if
+		      // they are logged into this app or not.
+		      document.getElementById('status').innerHTML = 'Please log ' +
+		        'into Facebook.';
+		    }
+		  }
+		 
+		  // This function is called when someone finishes with the Login
+		  // Button.  See the onlogin handler attached to it in the sample
+		  // code below.
+		  function checkLoginState() {
+		    FB.getLoginStatus(function(response) {
+		      statusChangeCallback(response);
+		    });
+		  }
+
+        window.fbAsyncInit = function() {
+	 		FB.init({
+	          appId      : '1490153377925381',
+	          xfbml      : true,
+	          version    : 'v2.1'
+	        });
+
+      //       FB.getLoginStatus(function(response) {
+		    //   statusChangeCallback(response);
+		    // });
+
+  		};
+
+  		(function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "//connect.facebook.net/en_US/sdk.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+
+		function fb_login(){
+			console.log("Hallo")
+
+		    FB.login(function(response) {
+
+		        if (response.authResponse) {
+					checkLoginState()
+
+		            console.log('Welcome!  Fetching your information.... ');
+		            access_token = response.authResponse.accessToken; //get access token
+		            user_id = response.authResponse.userID; //get FB UID
+
+		            FB.api('/me', function(response) {
+		                user_email = response.email; //get user email
+		          		console.log("User Email: " + user_email)         
+		            });
+
+		        } else {
+		            //user hit cancel button
+		            console.log('User cancelled login or did not fully authorize.');
+
+		        }
+		    }, {
+		        scope: 'read_stream,publish_stream,email'
+		    });
+		}
+		(function() {
+		    var e = document.createElement('script');
+		    e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
+		    e.async = true;
+		}());
+
+		function printSomeFeed() {
+		    console.log('Welcome!  Fetching some feed bruh.... ');
+		    FB.api('/me/statuses', function(response) {
+		      console.log('Response keys from /me/statuses: ' + Object.keys(response.data));
+		 
+		        var objectID = response.data[0].object_id;
+		 
+		        var batch_req = [];
+		 
+		        for (var i = 0; i < response.data.length; i++) {
+		          batch_req.push({
+		            method: 'GET',
+		            relative_url: '/'+response.data[i].id + "/likes?summary=true"
+		          });
+		        }
+		 
+		        var like_data = [];
+		 
+		        FB.api('/', 'POST', {
+		          batch: batch_req
+		       }, function (batch_response) {
+		        for (var i = 0; i < batch_response.length; i++) {
+		          like_data[i] = JSON.parse(batch_response[i].body).summary.total_count;
+		        }
+		 
+		 
+		        /*
+		         * Fill in the training data instances
+		         */
+		        var tempData = [];
+		        var temp;
+		        for(var i=0; i<response.data.length; i++) {
+		 
+		 
+		              /* Add to the trainingData array with appropriate like count*/
+		              tempData[i] = {
+		                  "output": like_data[i],
+		                  "csvInstance": [
+		                    response.data[i].message,                     // status
+		                    response.data[i].updated_time.slice(11, 13),  // time of day
+		                    response.data[i].message.length,              // Length of status
+		                    (response.data[i].message.match(/\?/g) || []).length  // Number of question marks
+		                    //"10",                                       // number of tags
+		                    //"image"                                     // image or noimage
+		                  ]
+		                };
+		        }
+		 
+		        console.log(tempData);
+		        trainingData = tempData;
+		        handleComputeEngineClientLoad();
+		       });
+		    });
+		  }
+
     </script>
-    <script src="https://apis.google.com/js/client.js?onload=handleComputeEngineClientLoad"></script>
+    <script src="https://apis.google.com/js/client.js"></script>
 
 		<!-- Header -->
 			<section id="header" class="dark">
@@ -212,8 +317,8 @@
 					<h1>foresight</h1>
 					<p>A predictive engine for Facebook post engagement</p>
 				</header>
-				<footer>
-					<a href="#first" class="button scrolly">Login with Facebook</a>
+				<footer id="footer_button">
+					<a onclick="fb_login()" class="button scrolly">Login with Facebook</a>
 				</footer>
 			</section>
 	</body>
