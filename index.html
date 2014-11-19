@@ -22,6 +22,11 @@
 		</noscript>
 		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
 		<!--[if lte IE 9]><link rel="stylesheet" href="css/ie/v9.css" /><![endif]-->
+		<style>
+			div.foresight_form {  
+		      margin: 40px;  
+		    } 
+		</style>
 	</head>
 	<body>
 
@@ -37,15 +42,7 @@
       var scopes = 'https://www.googleapis.com/auth/prediction https://www.googleapis.com/auth/devstorage.read_write';
 
 		function getQueryVariable(variable) {
-		  var query = window.location.search.substring(1);
-		  var vars = query.split("&");
-		  for (var i=0;i<vars.length;i++) {
-		    var pair = vars[i].split("=");
-		    if (pair[0] == variable) {
-		      return pair[1];
-		    }
-		  } 
-		  alert('Query Variable ' + variable + ' not found');
+		  return 'e6a29058-59a6-2a25-5404-fd44ea3052cd'
 		}
 
       function handleComputeEngineClientLoad() {
@@ -68,7 +65,6 @@ console.log("Param: " + getQueryVariable("id"));
 
           makeApiCall();
         } else {
-          authorizeButton.onclick = handleAuthClick;
 
           console.log("Fail");
         }
@@ -80,18 +76,18 @@ console.log("Param: " + getQueryVariable("id"));
         return false;
       }
 
-      function runPrediction() {
+      function runPrediction(message, time_of_day, status_length, num_questions) {
         // TODO: change id to be unique for every user
         var prediction_request = gapi.client.prediction.trainedmodels.predict(
-              {
+			{
                 "project": "brave-nucleus-763",
                 "id": getQueryVariable("id"),
                 "input": {
                   "csvInstance": [
-                    "Just won a new Myo!",                     // status
-                    "05",  // time of day
-                    "40",              // Length of status
-                    "0"  // Number of question marks
+                    message,                     // status
+                    time_of_day,  // time of day
+                    status_length,              // Length of status
+                    num_questions  // Number of question marks
                     //"10",                                       // number of tags
                     //"image"                                     // image or noimage
                   ]
@@ -101,6 +97,7 @@ console.log("Param: " + getQueryVariable("id"));
 
             prediction_request.execute(function(resp) {
               console.log(resp)
+              document.getElementById("results").innerHTML = resp.outputValue
             });
       }
 
@@ -115,7 +112,7 @@ console.log("Param: " + getQueryVariable("id"));
 
         Promise.all([status]).then(function() {
           // Success
-          runPrediction()
+          //runPrediction()
         }, function() {
           // Retry
           request.execute(function(resp) {
@@ -147,8 +144,8 @@ console.log("Param: " + getQueryVariable("id"));
             console.log(resp);
 
             // Hide button
-    		document.getElementById("footer_button").className = "";
-    		document.getElementById("footer_button").innerHTML = "Processed";
+    		document.getElementById("foresight_form").className = "";
+    		document.getElementById("footer_button").className = "hidden";
 
             setTimeout(waitUntilTrained, 20000);
             
@@ -222,7 +219,7 @@ console.log("Param: " + getQueryVariable("id"));
        }(document, 'script', 'facebook-jssdk'));
 
 		function fb_login(){
-			console.log("Hallo")
+			document.getElementById("footer_button").innerHTML = "<c><img src='loading.gif' height='32' width='32'></img></c>"
 
 		    FB.login(function(response) {
 
@@ -308,6 +305,19 @@ console.log("Param: " + getQueryVariable("id"));
 		    });
 		  }
 
+		 function submit_form() {
+		 	var message = document.getElementById('message').value;
+		 	runPrediction(message, get_date(), message.length, (message.match(/\?/g) || []).length)
+		 }
+
+		function get_date() {
+		  var d = new Date();                                                                                                                                                              
+		  var n = d.getHours();
+		  return "" + n; 
+		}
+
+
+
     </script>
     <script src="https://apis.google.com/js/client.js"></script>
 
@@ -317,8 +327,26 @@ console.log("Param: " + getQueryVariable("id"));
 					<h1>foresight</h1>
 					<p>A predictive engine for Facebook post engagement</p>
 				</header>
+				<div id="foresight_form" class="hidden">
+					<form>
+							<div class="row half">
+								<div class="12u">
+									<textarea name="message" id="message" placeholder="Enter your message"></textarea>
+								</div>
+							</div>
+							<div class="row">
+								<div class="12u">
+									<ul class="actions">
+										<li><input onclick="submit_form()" class="button" value="Test Status" /></li>
+										<li><input type="reset" class="button alt" value="Clear" /></li>
+									</ul>
+								</div>
+							</div>
+						</form>
+					<div id="results"></div>
+				</div>
 				<footer id="footer_button">
-					<a onclick="fb_login()" class="button scrolly">Login with Facebook</a>
+					<a onclick="fb_login()" class="button scrolly" id="fb_login">Login with Facebook</a>
 				</footer>
 			</section>
 	</body>
